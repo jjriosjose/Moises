@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa Ruta Eduar Ceballos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        .filters {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 300px;
+            overflow-y: auto;
+        }
+        select, input, button {
+            width: 100%;
+            margin: 4px 0;
+            padding: 5px;
+            font-size: 14px;
+        }
+        .filter-toggle {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1100;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <button class="filter-toggle" onclick="toggleFilters()">☰ Filtros</button>
+    <div class="filters" id="filterPanel" style="display:none;">
+        <label>Condición:</label>
+        <select id="condicion">
+            <option>-- Seleccione --</option>
+            <option>Nuevo</option>
+            <option>Existente</option>
+        </select>
+        <label>Semana:</label>
+        <select id="semana"></select>
+        <label>Día de la Semana:</label>
+        <select id="dia"></select>
+        <label>Gestor:</label>
+        <select id="gestor"></select>
+        <label>Vendedor:</label>
+        <select id="vendedor"></select>
+        <label>Buscar Cliente:</label>
+        <input type="text" id="busqueda" placeholder="Escriba el nombre..." oninput="filtrarClientes()" />
+        <label>Cliente:</label>
+        <select id="cliente"></select>
+        <button onclick="irRuta()">Visitar</button>
+        <button onclick="registrarVisita()">Registro</button>
+        <button onclick="nuevoCliente()">Nuevo Cliente</button>
+    </div>
+    <script>
+        let mapa = L.map('map').setView([18.7357, -70.1627], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18
+        }).addTo(mapa);
+
+        let data = [];
+        let pines = [];
+        let selectores = {};
+        const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSeEki-rHj1e1OgDTM9W_VFJmd9k3YfKNIpRhclVaK6mx-hHvA/viewform?usp=pp_url";
+
+        async function cargarCSV() {
+            const resp = await fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ9ERHBiz2QlK1GY_pxQhMtcMfQD_uGG_E_hQHC6WO0JzFspkStVqCmuBe6tXLhHsCM31cpsAz8tsJ5/pub?output=csv");
+            const txt = await resp.text();
+            const rows = txt.split("\n").map(r => r.split(","));
+            const headers = rows.shift();
+            data = rows.map(r => Object.fromEntries(headers.map((h, i) => [h.trim(), r[i] ? r[i].trim() : ""])));
+
+            selectores = {
+                semana: filtrarUnicos(data.map(e => e.SEMANA)),
+                dia: filtrarUnicos(data.map(e => e.DIA)),
+                gestor: filtrarUnicos(data.map(e => e.gestor_servicio)),
+                vendedor: filtrarUnicos(data.map(e => e.vendedor)),
+                cliente: data.map(e => e.RazonSocial)
+            };
+
+            poblarSelect("semana", selectores.semana);
+            poblarSelect("dia", selectores.dia);
+            poblarSelect("gestor", selectores.gestor);
+            poblarSelect("vendedor", selectores.vendedor);
+            poblarSelect("cliente", selectores.cliente);
+
+            mostrarPines(data);
+        }
+
+        function filtrarUnicos(arr) {
+            return [...new Set(arr.filter(x => x))];
+        }
+
+        function poblarSelect(id, items) {
+            const sel = document.getElementById(id);
+            sel.innerHTML = "<option>-- Seleccione --</option>";
+            items.forEach(i => sel.innerHTML += `<option>${i}</option>`);
+        }
+
+        function mostrarPines(datos) {
+            pines.forEach(p => mapa.removeLayer(p));
+            pines = datos.filter(e => e.Latitud && e.Longitud).map(e => {
+                const pin = L.marker([parseFloat(e.Latitud), parseFloat(e.Longitud)]).addTo(mapa);
+                pin.bindPopup(e.RazonSocial);
+                return pin;
+            });
+        }
+
+        function filtrarClientes() {
+            const filtro = document.getElementById("busqueda").value.toLowerCase();
+            const clientesFiltrados = data.filter(e => e.RazonSocial.toLowerCase().includes(filtro)).map(e => e.RazonSocial);
+            poblarSelect("cliente", clientesFiltrados);
+        }
+
+        function irRuta() {
+            const cli = document.getElementById("cliente").value;
+            const d = data.find(e => e.RazonSocial === cli);
+            if (d) window.open(`https://www.google.com/maps/dir/?api=1&destination=${d.Latitud},${d.Longitud}`);
+        }
+
+        function registrarVisita() {
+            const cli = document.getElementById("cliente").value;
+            const d = data.find(e => e.RazonSocial === cli);
+            if (!d) return alert("Seleccione un cliente válido.");
+            const url = formURL +
+                `&entry.985299062=${encodeURIComponent(d.vendedor)}` +
+                `&entry.366494420=${encodeURIComponent(d.gestor_servicio)}` +
+                `&entry.381054793=Existente` +
+                `&entry.1521955635=${encodeURIComponent(d["Cod Empresa"])}` +
+                `&entry.879964686=${encodeURIComponent(d.RazonSocial)}` +
+                `&entry.1634734772=${d.Latitud}` +
+                `&entry.566218311=${d.Longitud}`;
+            window.open(url, "_blank");
+        }
+
+        function nuevoCliente() {
+            window.open(formURL + "&entry.381054793=Nuevo", "_blank");
+        }
+
+        function toggleFilters() {
+            const panel = document.getElementById("filterPanel");
+            panel.style.display = panel.style.display === "none" ? "block" : "none";
+        }
+
+        cargarCSV();
+    </script>
+</body>
+</html>

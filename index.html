@@ -1,0 +1,1357 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Mapa Moisés</title>
+<style>
+  #map { height: 90vh; width: 100%; }
+  #controls { padding: 10px; background: white; position: absolute; top: 10px; right: 10px; z-index: 1000;
+                border-radius: 5px; box-shadow: 0px 0px 6px #888; width: 260px; }
+  select, button, input { margin: 5px 0; width: 100%; }
+</style>
+<link href="https://unpkg.com/leaflet/dist/leaflet.css" rel="stylesheet"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+
+<div id="controls">
+  <label>Vendedor:</label><br/>
+  <select id="vendedor"><option value="">-- Seleccione --</option></select><br/>
+  <label>Gestor:</label><br/>
+  <select id="gestor"><option value="">-- Seleccione --</option></select><br/>
+  <label>Semana:</label><br/>
+  <select id="semana">
+    <option value="">-- Seleccione --</option>
+    <option value="1">Semana 1</option>
+    <option value="2">Semana 2</option>
+    <option value="3">Semana 3</option>
+    <option value="4">Semana 4</option>
+  </select><br/>
+  <label>Día de la Semana:</label><br/>
+  <select id="dia">
+    <option value="">-- Seleccione --</option>
+    <option value="Mon">Lunes</option>
+    <option value="Tue">Martes</option>
+    <option value="Wed">Miércoles</option>
+    <option value="Thu">Jueves</option>
+    <option value="Fri">Viernes</option>
+  </select><br/>
+  <label>Condición:</label><br/>
+  <select id="filtroCondicion">
+    <option value="">-- Todos --</option>
+    <option value="existente">Con Ruta</option>
+    <option value="sin_ruta">Sin Ruta</option>
+  </select><br/>
+  <label>Buscar Cliente:</label><br/>
+  <input id="buscador" placeholder="Escriba el nombre..." type="text"/><br/>
+  <label>Cliente:</label><br/>
+  <select id="cliente"><option value="">-- Seleccione --</option></select><br/>
+  <button id="visitar">Visitar</button>
+  <button disabled id="registro">Registro</button>
+  <button id="nuevoCliente">Nuevo Cliente</button>
+</div>
+
+<div id="map"></div>
+<script>
+var data = [
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka991",
+    "id": 1,
+    "RazonSocial": "VARIEDADES BAYONA 20 Y 10 SRL",
+    "latitud": 18.47452,
+    "longitud": -70.00288,
+    "dia_semana": "Fri",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora2195",
+    "id": 2,
+    "RazonSocial": "VARIEDADES BAYONA 20 Y 10 S.R.L",
+    "latitud": 18.47452,
+    "longitud": -70.00288,
+    "dia_semana": "Fri",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "KARAKA",
+    "Cod Empresa": "KARAKA",
+    "id": 3,
+    "RazonSocial": "LEVANTAMIENTO DE AREA SD OESTE/HERRERA",
+    "latitud": 18.4646262385927,
+    "longitud": -69.9792268317854,
+    "dia_semana": "Tue",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka991",
+    "id": 4,
+    "RazonSocial": "VARIEDADES BAYONA 20 Y 10 SRL",
+    "latitud": 18.47452,
+    "longitud": -70.00288,
+    "dia_semana": "Tue",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora2195",
+    "id": 5,
+    "RazonSocial": "VARIEDADES BAYONA 20 Y 10 S.R.L",
+    "latitud": 18.47452,
+    "longitud": -70.00288,
+    "dia_semana": "Tue",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka26",
+    "id": 6,
+    "RazonSocial": "TIENDAS MINAYA, SRL (CHARLES DE GAULLE)",
+    "latitud": 18.50408,
+    "longitud": -69.82607,
+    "dia_semana": "Mon",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka391",
+    "id": 7,
+    "RazonSocial": "TIENDAS MINAYA, SRL",
+    "latitud": 18.50408,
+    "longitud": -69.82607,
+    "dia_semana": "Mon",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka380",
+    "id": 8,
+    "RazonSocial": "TIENDA AVENTURA",
+    "latitud": 18.48216,
+    "longitud": -69.89113,
+    "dia_semana": "Wed",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "karaka946",
+    "id": 9,
+    "RazonSocial": "SURTIDORA DULCE BANI ROSA",
+    "latitud": 18.48691,
+    "longitud": -69.89761,
+    "dia_semana": "Wed",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "distribuidora2080",
+    "id": 10,
+    "RazonSocial": "SURTIDORA BANI ROSA",
+    "latitud": 18.48691,
+    "longitud": -69.89761,
+    "dia_semana": "Wed",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "distribuidora1832",
+    "id": 11,
+    "RazonSocial": "SUPERMERCADO RAINBOW",
+    "latitud": 18.42782,
+    "longitud": -69.99184,
+    "dia_semana": "Wed",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "karaka1051",
+    "id": 12,
+    "RazonSocial": "SUPERMERCADO RAINBOW",
+    "latitud": 18.42782,
+    "longitud": -69.99184,
+    "dia_semana": "Wed",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "karaka1268",
+    "id": 13,
+    "RazonSocial": "SUPER FLORES",
+    "latitud": 18.45966,
+    "longitud": -69.94922,
+    "dia_semana": "Thu",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka1199",
+    "id": 14,
+    "RazonSocial": "SEVNO INVERSIONES",
+    "latitud": 18.45537,
+    "longitud": -69.94375,
+    "dia_semana": "Tue",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka26",
+    "id": 15,
+    "RazonSocial": "TIENDAS MINAYA, SRL (CHARLES DE GAULLE)",
+    "latitud": 18.50408,
+    "longitud": -69.82607,
+    "dia_semana": "Mon",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka391",
+    "id": 16,
+    "RazonSocial": "TIENDAS MINAYA, SRL",
+    "latitud": 18.50408,
+    "longitud": -69.82607,
+    "dia_semana": "Mon",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "distribuidora2628",
+    "id": 17,
+    "RazonSocial": "SELLER MORLA",
+    "latitud": 18.47571,
+    "longitud": -69.86313,
+    "dia_semana": "Mon",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "karaka1210",
+    "id": 18,
+    "RazonSocial": "SELLER MORLA",
+    "latitud": 18.47571,
+    "longitud": -69.86313,
+    "dia_semana": "Mon",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "distribuidora2077",
+    "id": 19,
+    "RazonSocial": "SAGA IMPORT",
+    "latitud": 18.45722,
+    "longitud": -69.9356,
+    "dia_semana": "Thu",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "karaka1081",
+    "id": 20,
+    "RazonSocial": "SAGA IMPORT",
+    "latitud": 18.45722,
+    "longitud": -69.9356,
+    "dia_semana": "Thu",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora1631",
+    "id": 21,
+    "RazonSocial": "P. Y R. COMERCIAL, S.A.",
+    "latitud": 18.42765,
+    "longitud": -69.97416,
+    "dia_semana": "Wed",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka452",
+    "id": 22,
+    "RazonSocial": "OH CASUAL",
+    "latitud": 18.44384,
+    "longitud": -69.93953,
+    "dia_semana": "Thu",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora3043",
+    "id": 23,
+    "RazonSocial": "NISILEVI IMPORT",
+    "latitud": 18.44943,
+    "longitud": -69.60513,
+    "dia_semana": "Mon",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1307",
+    "id": 24,
+    "RazonSocial": "NISILEVI IMPORT",
+    "latitud": 18.44943,
+    "longitud": -69.60513,
+    "dia_semana": "Mon",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora1260",
+    "id": 25,
+    "RazonSocial": "MUEBLERIA CASA ANA",
+    "latitud": 18.45131,
+    "longitud": -69.62887,
+    "dia_semana": "Mon",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka570",
+    "id": 26,
+    "RazonSocial": "MISTER ZAPATO",
+    "latitud": 18.43136,
+    "longitud": -69.97088,
+    "dia_semana": "Wed",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora1406",
+    "id": 27,
+    "RazonSocial": "MISTER ZAPATO",
+    "latitud": 18.43136,
+    "longitud": -69.97088,
+    "dia_semana": "Wed",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka975",
+    "id": 28,
+    "RazonSocial": "METROX COMERCIAL",
+    "latitud": 18.50982,
+    "longitud": -69.8625,
+    "dia_semana": "Tue",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora2564",
+    "id": 29,
+    "RazonSocial": "LOLITA",
+    "latitud": 18.4871,
+    "longitud": -69.89722,
+    "dia_semana": "Wed",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka570",
+    "id": 30,
+    "RazonSocial": "MISTER ZAPATO",
+    "latitud": 18.43136,
+    "longitud": -69.97088,
+    "dia_semana": "Wed",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora1406",
+    "id": 31,
+    "RazonSocial": "MISTER ZAPATO",
+    "latitud": 18.43136,
+    "longitud": -69.97088,
+    "dia_semana": "Wed",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka1190",
+    "id": 32,
+    "RazonSocial": "LIBRERIA Y PAPELERIA RA & MI SOLUCIONES EDUCATIVAS",
+    "latitud": 18.42845,
+    "longitud": -69.98938,
+    "dia_semana": "Wed",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora2053",
+    "id": 33,
+    "RazonSocial": "LA GRAN MURALLA",
+    "latitud": 18.48689,
+    "longitud": -69.8971,
+    "dia_semana": "Tue",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka918",
+    "id": 34,
+    "RazonSocial": "INVERSIONES B & S SRL.",
+    "latitud": 18.48671,
+    "longitud": -69.89705,
+    "dia_semana": "Tue",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "karaka790",
+    "id": 35,
+    "RazonSocial": "INVERSIONES AGAJE",
+    "latitud": 18.4871,
+    "longitud": -69.89722,
+    "dia_semana": "Wed",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka9",
+    "id": 36,
+    "RazonSocial": "INDUSTRIAS IBARRA",
+    "latitud": 18.44172,
+    "longitud": -69.98094,
+    "dia_semana": "Wed",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka9",
+    "id": 37,
+    "RazonSocial": "INDUSTRIAS IBARRA",
+    "latitud": 18.44172,
+    "longitud": -69.98094,
+    "dia_semana": "Fri",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora1402",
+    "id": 38,
+    "RazonSocial": "IMPORTATODO TINEO",
+    "latitud": 18.48307,
+    "longitud": -69.89102,
+    "dia_semana": "Tue",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora936",
+    "id": 39,
+    "RazonSocial": "IMPORTADORA J G TEJEDA, C. POR A.",
+    "latitud": 18.48741,
+    "longitud": -69.8996,
+    "dia_semana": "Wed",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "karaka1079",
+    "id": 40,
+    "RazonSocial": "IMPORTADORA J G TEJEDA",
+    "latitud": 18.48741,
+    "longitud": -69.8996,
+    "dia_semana": "Wed",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1296",
+    "id": 41,
+    "RazonSocial": "IMPORTADORA INVIVIENDA 20Y10",
+    "latitud": 18.50598,
+    "longitud": -69.81783,
+    "dia_semana": "Mon",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora2276",
+    "id": 42,
+    "RazonSocial": "IMPORTADORA INVIVIENDA 20Y10",
+    "latitud": 18.50598,
+    "longitud": -69.81783,
+    "dia_semana": "Mon",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora3062",
+    "id": 43,
+    "RazonSocial": "IMPORTADORA FRANCHESCA BOCA CHICA",
+    "latitud": 18.44742,
+    "longitud": -69.62996,
+    "dia_semana": "Mon",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora3062",
+    "id": 44,
+    "RazonSocial": "IMPORTADORA FRANCHESCA BOCA CHICA",
+    "latitud": 18.44742,
+    "longitud": -69.62996,
+    "dia_semana": "Mon",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1285",
+    "id": 45,
+    "RazonSocial": "IMPORTADORA FRANCHESCA BOCA CHICA",
+    "latitud": 18.44742,
+    "longitud": -69.62996,
+    "dia_semana": "Mon",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1285",
+    "id": 46,
+    "RazonSocial": "IMPORTADORA FRANCHESCA BOCA CHICA",
+    "latitud": 18.44742,
+    "longitud": -69.62996,
+    "dia_semana": "Mon",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora2029",
+    "id": 47,
+    "RazonSocial": "IMPORTADORA EL FUTURO J Y N",
+    "latitud": 18.48528,
+    "longitud": -69.89848,
+    "dia_semana": "Thu",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka1090",
+    "id": 48,
+    "RazonSocial": "IMPORTA TODO TINEO",
+    "latitud": 18.48306,
+    "longitud": -69.89099,
+    "dia_semana": "Tue",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka615",
+    "id": 49,
+    "RazonSocial": "HOGAR MANIA S.R.L.",
+    "latitud": 18.48678,
+    "longitud": -69.8975,
+    "dia_semana": "Tue",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1282",
+    "id": 50,
+    "RazonSocial": "HERMANOS LEI",
+    "latitud": 18.53642,
+    "longitud": -69.72486,
+    "dia_semana": "Mon",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "karaka1405",
+    "id": 51,
+    "RazonSocial": "HAMOHOUSE SRL",
+    "latitud": 18.48139,
+    "longitud": -69.89008,
+    "dia_semana": "Fri",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "distribuidora3069",
+    "id": 52,
+    "RazonSocial": "HAMO HOUSE",
+    "latitud": 18.46718,
+    "longitud": -69.95118,
+    "dia_semana": "Fri",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "DIOGENES",
+    "Cod Empresa": "karaka944",
+    "id": 53,
+    "RazonSocial": "FLORISTERIA ZUNIFLOR, SRL",
+    "latitud": 18.45703,
+    "longitud": -69.94926,
+    "dia_semana": "Thu",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1223",
+    "id": 54,
+    "RazonSocial": "FERRETERIA GARABITO",
+    "latitud": 18.47414,
+    "longitud": -69.84109,
+    "dia_semana": "Mon",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "KARAKA",
+    "Cod Empresa": "KARAKA",
+    "id": 55,
+    "RazonSocial": "GESTION DE COBRO / OFICINA",
+    "latitud": 18.4721039672809,
+    "longitud": -69.8939220468341,
+    "dia_semana": "Fri",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "KARAKA",
+    "Cod Empresa": "KARAKA",
+    "id": 56,
+    "RazonSocial": "GESTION DE COBRO / OFICINA",
+    "latitud": 18.4721039672809,
+    "longitud": -69.8939220468341,
+    "dia_semana": "Fri",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "KARAKA",
+    "Cod Empresa": "KARAKA",
+    "id": 57,
+    "RazonSocial": "GESTION DE COBRO / OFICINA",
+    "latitud": 18.4721039672809,
+    "longitud": -69.8939220468341,
+    "dia_semana": "Fri",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1306",
+    "id": 58,
+    "RazonSocial": "FERRECENTRO OZAMA",
+    "latitud": 18.49526,
+    "longitud": -69.86338,
+    "dia_semana": "Thu",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1286",
+    "id": 59,
+    "RazonSocial": "FERRECENTRO MADERERA HERNANDEZ",
+    "latitud": 18.52863,
+    "longitud": -69.78068,
+    "dia_semana": "Mon",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka832",
+    "id": 60,
+    "RazonSocial": "F Y L COMERCIAL",
+    "latitud": 18.4329,
+    "longitud": -69.96388,
+    "dia_semana": "Thu",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "NO ASIGNADO",
+    "Cod Empresa": "distribuidora2054",
+    "id": 61,
+    "RazonSocial": "F Y L COMERCIAL",
+    "latitud": 18.4329,
+    "longitud": -69.96388,
+    "dia_semana": "Thu",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka939",
+    "id": 62,
+    "RazonSocial": "EVELYMAR COMERCIAL, SRL",
+    "latitud": 18.46122,
+    "longitud": -69.94118,
+    "dia_semana": "Thu",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "NO ASIGNADO",
+    "Cod Empresa": "karaka1089",
+    "id": 63,
+    "RazonSocial": "DIANELIS JEREZ DE LA CRUZ (DECORACIONES NASLY)",
+    "latitud": 18.52569,
+    "longitud": -69.87013,
+    "dia_semana": "Thu",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora2847",
+    "id": 64,
+    "RazonSocial": "DECORACIONES NASLY",
+    "latitud": 18.52569,
+    "longitud": -69.87013,
+    "dia_semana": "Thu",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka964",
+    "id": 65,
+    "RazonSocial": "DALUY IMPORT",
+    "latitud": 18.48718,
+    "longitud": -69.8975,
+    "dia_semana": "Thu",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "distribuidora2948",
+    "id": 66,
+    "RazonSocial": "DALUY IMPORT",
+    "latitud": 18.48718,
+    "longitud": -69.8975,
+    "dia_semana": "Thu",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka980",
+    "id": 67,
+    "RazonSocial": "D DILCIA FLORISTERIA Y DECORACIONES SRL",
+    "latitud": 18.44572,
+    "longitud": -69.63294,
+    "dia_semana": "Mon",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora1452",
+    "id": 68,
+    "RazonSocial": "D DILCIA FLORISTERIA Y DECORACIONES",
+    "latitud": 18.44572,
+    "longitud": -69.63294,
+    "dia_semana": "Mon",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka1050",
+    "id": 69,
+    "RazonSocial": "D CRISTO REY 20 Y 10, SRL",
+    "latitud": 18.50141,
+    "longitud": -69.92559,
+    "dia_semana": "Thu",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora1994",
+    "id": 70,
+    "RazonSocial": "D CRISTO REY 20 Y 10",
+    "latitud": 18.50141,
+    "longitud": -69.92559,
+    "dia_semana": "Thu",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora2912",
+    "id": 71,
+    "RazonSocial": "D' AQUINO VARIEDADES 20 Y 10",
+    "latitud": 18.49411,
+    "longitud": -70.01044,
+    "dia_semana": "Tue",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka1246",
+    "id": 72,
+    "RazonSocial": "CORRE CORRE AAA",
+    "latitud": 18.48552,
+    "longitud": -69.88999,
+    "dia_semana": "Thu",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka1065",
+    "id": 73,
+    "RazonSocial": "COMETA IMPORT, SRL",
+    "latitud": 18.48469,
+    "longitud": -69.90088,
+    "dia_semana": "Tue",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora2286",
+    "id": 74,
+    "RazonSocial": "COMETA COMERCIAL",
+    "latitud": 18.4869,
+    "longitud": -69.90318,
+    "dia_semana": "Tue",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora1269",
+    "id": 75,
+    "RazonSocial": "COMERCIAL NINI",
+    "latitud": 18.48142,
+    "longitud": -69.89998,
+    "dia_semana": "Tue",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "karaka840",
+    "id": 76,
+    "RazonSocial": "COMERCIAL NINI",
+    "latitud": 18.48142,
+    "longitud": -69.89998,
+    "dia_semana": "Tue",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka512",
+    "id": 77,
+    "RazonSocial": "COMERCIAL N Y K",
+    "latitud": 18.45874,
+    "longitud": -69.99283,
+    "dia_semana": "Wed",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora2542",
+    "id": 78,
+    "RazonSocial": "COMERCIAL MI ESPERANZA",
+    "latitud": 18.5214,
+    "longitud": -70.01473,
+    "dia_semana": "Tue",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "RYAN",
+    "Cod Empresa": "karaka1350",
+    "id": 79,
+    "RazonSocial": "CEROPLAST",
+    "latitud": 18.47284,
+    "longitud": -69.92121,
+    "dia_semana": "Wed",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "karaka1162",
+    "id": 80,
+    "RazonSocial": "CASA MIREYA",
+    "latitud": 18.48716,
+    "longitud": -69.89938,
+    "dia_semana": "Wed",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora2110",
+    "id": 81,
+    "RazonSocial": "CASA MIREYA",
+    "latitud": 18.48716,
+    "longitud": -69.89938,
+    "dia_semana": "Wed",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora888",
+    "id": 82,
+    "RazonSocial": "CASA MARISOL",
+    "latitud": 18.48729,
+    "longitud": -69.89627,
+    "dia_semana": "Wed",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora3047",
+    "id": 83,
+    "RazonSocial": "CASA INDHIRA",
+    "latitud": 18.50526,
+    "longitud": -69.86625,
+    "dia_semana": "Thu",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1226",
+    "id": 84,
+    "RazonSocial": "CASA INDHIRA",
+    "latitud": 18.50526,
+    "longitud": -69.86625,
+    "dia_semana": "Thu",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora3047",
+    "id": 85,
+    "RazonSocial": "CASA INDHIRA",
+    "latitud": 18.50526,
+    "longitud": -69.86625,
+    "dia_semana": "Thu",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1226",
+    "id": 86,
+    "RazonSocial": "CASA INDHIRA",
+    "latitud": 18.50526,
+    "longitud": -69.86625,
+    "dia_semana": "Thu",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora1260",
+    "id": 87,
+    "RazonSocial": "MUEBLERIA CASA ANA",
+    "latitud": 18.45131,
+    "longitud": -69.62887,
+    "dia_semana": "Mon",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka791",
+    "id": 88,
+    "RazonSocial": "CASA ANA MUEBLES EXPRESS, SRL",
+    "latitud": 18.45131,
+    "longitud": -69.62887,
+    "dia_semana": "Mon",
+    "semana": "3"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka791",
+    "id": 89,
+    "RazonSocial": "CASA ANA MUEBLES EXPRESS, SRL",
+    "latitud": 18.45131,
+    "longitud": -69.62887,
+    "dia_semana": "Mon",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1251",
+    "id": 90,
+    "RazonSocial": "CAMILA DESIGNS",
+    "latitud": 18.48111,
+    "longitud": -69.81278,
+    "dia_semana": "Mon",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "distribuidora1612",
+    "id": 91,
+    "RazonSocial": "CALZADOS Y NOVEDADES EVA",
+    "latitud": NaN,
+    "longitud": NaN,
+    "dia_semana": "Wed",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1326",
+    "id": 92,
+    "RazonSocial": "CALZADOS Y NOVEDADES EVA",
+    "latitud": 18.50414,
+    "longitud": -69.90733,
+    "dia_semana": "Wed",
+    "semana": "2"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora1334",
+    "id": 93,
+    "RazonSocial": "CALZADOS PARIS",
+    "latitud": 18.48489,
+    "longitud": -69.89206,
+    "dia_semana": "Tue",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1215",
+    "id": 94,
+    "RazonSocial": "ACOLCHADO TODO HOGAR",
+    "latitud": 18.52149,
+    "longitud": -69.83581,
+    "dia_semana": "Mon",
+    "semana": "1"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "MANUEL",
+    "Cod Empresa": "distribuidora2286",
+    "id": 95,
+    "RazonSocial": "COMETA COMERCIAL",
+    "latitud": 18.4869,
+    "longitud": -69.90318,
+    "dia_semana": "Tue",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "JOSE",
+    "Cod Empresa": "distribuidora2816",
+    "id": 96,
+    "RazonSocial": "ACEVEDO COMERCIAL",
+    "latitud": 18.49836,
+    "longitud": -69.90319,
+    "dia_semana": "Tue",
+    "semana": "4"
+  },
+  {
+    "Empresa": "ka",
+    "vendedor": "MOISES FELIZ",
+    "gestor_servicio": "EVELYN",
+    "Cod Empresa": "karaka1232",
+    "id": 97,
+    "RazonSocial": "A TU PRECIO 20 Y 10",
+    "latitud": 18.4706,
+    "longitud": -69.80751,
+    "dia_semana": "Mon",
+    "semana": "2"
+  }
+];
+
+// Inicialización del mapa
+var map = L.map('map').setView([18.5, -69.9], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+var gestorSelect = document.getElementById('gestor');
+var diaSelect = document.getElementById('dia');
+var semanaSelect = document.getElementById('semana');
+var clienteSelect = document.getElementById('cliente');
+var buscador = document.getElementById('buscador');
+var registroBtn = document.getElementById('registro');
+var nuevoBtn = document.getElementById('nuevoCliente');
+var markersLayer = L.layerGroup().addTo(map);
+var markersMap = {};
+
+// Cargar gestores únicos
+[...new Set(data.map(c => c.gestor_servicio))].forEach(g => {
+    var opt = document.createElement('option');
+    opt.value = g;
+    opt.text = g;
+    gestorSelect.appendChild(opt);
+});
+
+// Función para actualizar pines según filtros
+function actualizarMarcadores(gestor, dia, semana, texto) {
+    markersLayer.clearLayers();
+    clienteSelect.innerHTML = '<option value="">-- Seleccione --</option>';
+    registroBtn.disabled = true;
+    data.filter(c => (!gestor || c.gestor_servicio === gestor) &&
+                     (!dia || c.dia_semana === dia) &&
+                     (!semana || c.semana == semana) &&
+                     (!texto || c.RazonSocial.toLowerCase().includes(texto.toLowerCase())))
+        .forEach(c => {
+            var opt = document.createElement('option');
+            opt.value = c.id;
+            opt.text = c.RazonSocial;
+            clienteSelect.appendChild(opt);
+            
+    var condicion = (c.dia_semana && c.semana) ? 'existente' : 'sin_ruta';
+            var iconUrl = condicion === 'sin_ruta'
+                ? 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png'  // pin amarillo
+                : 'https://cdn-icons-png.flaticon.com/512/2776/2776000.png'; // pin azul
+
+            var icon = L.icon({
+                iconUrl: iconUrl,
+                iconSize: [30, 30],
+                iconAnchor: [15, 30],
+                popupAnchor: [0, -30]
+            });
+    
+            var marker = L.marker([c.latitud, c.longitud], {icon: icon})
+                .bindPopup("<b>" + c.RazonSocial + "</b><br><a target='_blank' href='https://www.google.com/maps/dir/?api=1&destination=" + c.latitud + "," + c.longitud + "'>Ir desde mi ubicación</a>");
+            marker.addTo(markersLayer);
+            markersMap[c.id] = marker;
+        });
+}
+
+gestorSelect.onchange = () => actualizarMarcadores(gestorSelect.value, diaSelect.value, semanaSelect.value, buscador.value);
+diaSelect.onchange = () => actualizarMarcadores(gestorSelect.value, diaSelect.value, semanaSelect.value, buscador.value);
+semanaSelect.onchange = () => actualizarMarcadores(gestorSelect.value, diaSelect.value, semanaSelect.value, buscador.value);
+buscador.oninput = () => actualizarMarcadores(gestorSelect.value, diaSelect.value, semanaSelect.value, buscador.value);
+
+clienteSelect.onchange = function() {
+    registroBtn.disabled = this.value === "";
+    var id = this.value;
+    if (id && markersMap[id]) {
+        map.setView(markersMap[id].getLatLng(), 12);
+        markersMap[id].openPopup();
+    }
+};
+
+document.getElementById('visitar').onclick = function() {
+    var id = clienteSelect.value;
+    if (id) {
+        var c = data.find(c => c.id == id);
+        if (c) {
+            window.open("https://www.google.com/maps/dir/?api=1&destination=" + c.latitud + "," + c.longitud, "_blank");
+        }
+    }
+};
+
+// FORMULARIO: Registro y Nuevo
+registroBtn.onclick = function() {
+    if (!navigator.geolocation) {
+        alert("Geolocalización no soportada");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(pos => {
+        var lat = pos.coords.latitude;
+        var lon = pos.coords.longitude;
+        var id = clienteSelect.value;
+        var c = data.find(c => c.id == id);
+        if (c) {
+            var condicion = (c.dia_semana && c.semana) ? "Existente" : "Sin Ruta";
+            var url = "https://docs.google.com/forms/d/e/1FAIpQLSeEki-rHj1e1OgDTM9W_VFJmd9k3YfKNIpRhclVaK6mx-hHvA/viewform?usp=pp_url" +
+                      "&entry.985299062=" + encodeURIComponent(c.vendedor) +
+                      "&entry.366494420=" + encodeURIComponent(c.gestor_servicio || "") +
+                      "&entry.381054793=" + encodeURIComponent(condicion) +
+                      "&entry.1521955635=" + encodeURIComponent(c['Cod Empresa']) +
+                      "&entry.879964686=" + encodeURIComponent(c.RazonSocial) +
+                      "&entry.1634734772=" + encodeURIComponent(lat) +
+                      "&entry.566218311=" + encodeURIComponent(lon);
+            window.open(url, "_blank");
+        }
+    });
+};
+
+
+nuevoBtn.onclick = function() {
+    if (!navigator.geolocation) {
+        alert("Geolocalización no soportada");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(pos => {
+        var lat = pos.coords.latitude;
+        var lon = pos.coords.longitude;
+        var vendedorSelect = document.getElementById('vendedor');
+        var vendedor = vendedorSelect.value || "Sin Vendedor";
+        var url = "https://docs.google.com/forms/d/e/1FAIpQLSeEki-rHj1e1OgDTM9W_VFJmd9k3YfKNIpRhclVaK6mx-hHvA/viewform?usp=pp_url" +
+                  "&entry.985299062=" + encodeURIComponent(vendedor) +
+                  "&entry.366494420=" +
+                  "&entry.381054793=Nuevo" +
+                  "&entry.1634734772=" + encodeURIComponent(lat) +
+                  "&entry.566218311=" + encodeURIComponent(lon);
+        window.open(url, "_blank");
+    });
+};
+
+
+actualizarMarcadores('', '', '', '');
+</script>
+</body>
+</html>
